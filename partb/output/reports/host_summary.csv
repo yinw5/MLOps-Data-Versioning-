@@ -1,0 +1,4 @@
+host_type,listings,median_price,median_rating,median_occupancy_days,total_est_revenue,superhost_share,share_of_listings
+10+ listings,2729,195.0,4.83,30.0,41958557.0,0.389,0.353
+2-9 listings,2625,122.0,4.85,84.0,44660783.0,0.564,0.34
+single listing,2376,145.0,4.91,108.0,48232025.0,0.494,0.307

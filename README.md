@@ -1,4 +1,8 @@
-# MLOps – Data Versioning with DVC and Git LFS
+# MLOps – Data Versioning (Part A) and Data Lineage (Part B)
+
+Part A: DVC vs Git LFS on the CrossFit athletes data (below). Part B: descriptive report on Chicago Airbnb data, with a Marquez lineage graph ([jump to Part B](#part-b--chicago-airbnb-reporting--data-lineage-marquez)).
+
+## Part A
 
 Predict `total_lift` (= deadlift + clean & jerk + snatch + back squat) on the CrossFit athletes
 dataset, versioning the data with two tools: **DVC** and **Git LFS**.
@@ -157,3 +161,118 @@ All code has been run and every output is in `dvc/` and `gitlfs/`. What's left:
 - **Ease of switching versions:** both kept the training code untouched. Git LFS takes one command; DVC takes two, and forgetting `dvc checkout` is an easy mistake.
 - **Effect of DP:** independent of the tool. DP cost about 0.03 R² (≈ +6 lb MAE) at every noise level tried; ε fell from 18.5 to 0.87 with almost no extra accuracy loss.
 - **Verdict:** Git LFS for quick, small projects; DVC for real ML work (large data, cloud remotes, pipelines and experiments).
+
+---
+
+# Part B – Chicago Airbnb reporting + data lineage (Marquez)
+
+Descriptive analytics only, no prediction. Data: [Inside Airbnb](https://insideairbnb.com/) Chicago
+scrape from 2025-09-22: `listings.csv` (8,660 listings) and `reviews.csv` (492k reviews, 2009 to 2025).
+Raw files sit in `data/raw/airbnb/`, which is git-ignored because it has host and reviewer names.
+
+## Layout
+
+```
+partb/
+├── pipeline.py              # 8 steps: clean -> aggregate -> 5 reports -> charts + insights
+├── lineage.py               # sends OpenLineage START/COMPLETE events (with schemas) to Marquez
+└── output/
+    ├── clean/               # listings_clean.csv, reviews_monthly.csv
+    ├── reports/             # neighbourhood / room_type / host / stay_length_vs_license / review_trend
+    ├── charts/              # 6 PNGs for the report slide
+    ├── insights.md          # the written insights (numbers filled in by the code)
+    ├── lineage/             # Marquez screenshots: full + compact view
+    └── lineage_events.jsonl # every lineage event that was sent (backup / proof)
+```
+
+## Transformations (what `clean_listings` etc. do)
+
+- Keep 19 of 79 columns. Drop names, free text, URLs, photos and `host_id`.
+- `price` "$1,234.00" → float. Drop rows with no price (835, mostly inactive) or outside $10–2000
+  (placeholders like $50,000). 7,730 listings remain.
+- `t`/`f` → 1/0. New groupings: `stay_type` (short-term vs 30+ nights), `license_status`
+  (registered / pending / missing), `host_type` (single / 2–9 / 10+ listings).
+- Reviews: join to listings, count per month. 5 summary tables from the clean data, then charts and
+  `insights.md` from the summary tables.
+
+## Data lineage
+
+Marquez graph: `partb/output/lineage/marquez_lineage_compact.png`. Same flow:
+
+```mermaid
+flowchart LR
+  L[(raw listings.csv)] --> C[clean_listings] --> LC[(listings_clean.csv)]
+  R[(raw reviews.csv)] --> A[aggregate_reviews_monthly]
+  LC --> A --> RM[(reviews_monthly.csv)]
+  LC --> N[report_neighbourhoods] --> NS[(neighbourhood_summary)]
+  LC --> T[report_room_types] --> TS[(room_type_summary)]
+  LC --> H[report_hosts] --> HS[(host_summary)]
+  LC --> S[report_stay_license] --> SS[(stay_length_vs_license)]
+  RM --> Y[report_review_trend] --> YS[(review_trend_yearly)]
+  NS & TS & HS & SS & YS & RM & LC --> B[build_report]
+  B --> I[(insights.md)]
+  B --> G[(charts/*.png)]
+```
+
+Source → transformation → reporting: 2 raw sources, 2 cleaning/aggregation jobs, 5 report jobs,
+1 reporting job. That's 8 jobs and 11 datasets in Marquez namespace `airbnb-chicago-reporting`.
+Every dataset node carries its column schema; every job carries a description.
+
+## Results / insights (from `partb/output/insights.md`)
+
+- **Where:** Near North Side, West Town and Near West Side hold 28% of listings (76 neighbourhoods).
+  The priciest areas are Near North Side ($231 median), Loop ($222) and Near South Side ($213), vs $152 citywide.
+- **What:** 80% of listings are entire homes/apts (median $177/night) vs private rooms at $60.
+  Ratings are high everywhere: median 4.87/5; superhosts 4.91 vs others 4.77.
+- **Who:** 69% of listings belong to multi-listing hosts. Operators with 10+ listings run 35% of
+  the market, charge more ($195 vs $145) and rate lower (4.83 vs 4.91) than single-listing hosts.
+- **Rules:** 34% of listings require 30+ night stays, and only 6.5% of those have a city license,
+  vs 99.5% of short-term listings. Chicago doesn't require registration for 30+ day rentals, so many
+  hosts likely set long minimum stays to avoid it.
+- **When:** reviews fell 50% in 2020 (COVID), passed 2019 levels again in 2021 and peaked at 102k
+  in 2024. August is the busiest month, February the quietest (about 2.9x apart).
+
+## Reproduce Part B
+
+```bash
+# one-time: Docker without Docker Desktop
+brew install colima docker docker-compose
+colima start --cpu 4 --memory 6 --vm-type vz --vz-rosetta
+#  (in ~/.docker/config.json: "cliPluginsExtraDirs": ["/opt/homebrew/lib/docker/cli-plugins"])
+
+# Marquez (cloned to ~/Downloads/MLops/tools/marquez, tag 0.51.1).
+# API on 9000 because macOS AirPlay already uses port 5000.
+cd ~/Downloads/MLops/tools/marquez
+./docker/up.sh --tag 0.51.1 --api-port 9000 --api-admin-port 9001 --detach --no-search
+
+# data + pipeline (from this repo's root)
+mkdir -p data/raw/airbnb && cp ~/Downloads/listings.csv ~/Downloads/reviews.csv data/raw/airbnb/
+uv run python partb/pipeline.py
+# lineage UI: http://localhost:3000 -> Jobs -> build_report (toggle "Compact Nodes")
+
+# when done:  ./docker/down.sh  (in the marquez folder)  and  colima stop
+```
+
+Lint: `uv run ruff check partb && uv run pylint partb` → All checks passed, 10.00/10.
+
+## TODO for Part B submission
+
+Part B is code-complete; what's left is the 2 slides.
+
+1. **Slide: report + insights.** Title like "Chicago Airbnb, Sept 2025: who, where, what, when".
+   - Use 3–4 charts from `partb/output/charts/`. The strongest are `5_license_by_stay_type.png`
+     (the regulation finding), `6_reviews_per_month.png` (COVID dip + seasonality),
+     `1_top_neighbourhoods.png` or `2_priciest_neighbourhoods.png`, and `4_host_size.png`.
+   - Add 4–5 one-line insights from the list above.
+   - Footnote: "Inside Airbnb, Chicago, scraped 2025-09-22; 7,730 listings after cleaning;
+     reviews used as a booking proxy".
+2. **Slide: data lineage diagram.** Use `partb/output/lineage/marquez_lineage_compact.png`, or
+   take your own screenshot at http://localhost:3000 (Marquez must be running, see above).
+   - Label the three zones on the slide: **Sources** (raw listings, raw reviews) →
+     **Transformations** (clean_listings, aggregate_reviews_monthly) → **Reporting**
+     (5 report jobs → build_report → insights.md + charts).
+   - One line on the tooling: "Lineage captured with OpenLineage events from the Python pipeline;
+     visualised in Marquez 0.51 (Docker)."
+3. Submit the code with the Part A files: `partb/pipeline.py` and `partb/lineage.py` (+ README),
+   or the repo link.
+4. Push: `git push origin main` (no force needed this time).

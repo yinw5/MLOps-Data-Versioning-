@@ -1,0 +1,5 @@
+room_type,listings,median_price,median_rating,median_occupancy_days,total_est_revenue,superhost_share,share_of_listings
+Entire home/apt,6173,177.0,4.88,84.0,126021893.0,0.503,0.799
+Private room,1492,60.0,4.83,60.0,8310027.0,0.392,0.193
+Shared room,33,38.0,4.8,18.0,38868.0,0.333,0.004
+Hotel room,32,254.5,4.82,18.0,480577.0,0.406,0.004
