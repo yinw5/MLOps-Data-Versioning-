@@ -3,6 +3,6 @@ __pycache__/
 .ruff_cache/
 .DS_Store
 # raw download stays local (large, contains athlete names)
-data/
+/data/
 # local DVC remote (data store)
-dvc-storage/
+/dvc-storage/
