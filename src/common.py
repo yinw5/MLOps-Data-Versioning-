@@ -1,4 +1,4 @@
-"""Shared constants and helpers for the data-versioning assignment."""
+"""Stuff shared by all the scripts (columns, split settings, preprocessing, metrics)."""
 
 import json
 from pathlib import Path
@@ -18,8 +18,8 @@ from sklearn.preprocessing import OneHotEncoder, StandardScaler
 
 TARGET = "total_lift"
 LIFTS = ["deadlift", "candj", "snatch", "backsq"]
-# total_lift is the sum of LIFTS, so the lifts themselves would leak the target.
-# athlete_id / name are identifiers, not features.
+# total_lift is just the sum of the lifts, so using them as features would be cheating.
+# ids/names aren't useful either
 EXCLUDED = [TARGET, *LIFTS, "athlete_id", "name"]
 
 TEST_SIZE = 0.2
@@ -31,7 +31,7 @@ TEST_PATH = DATA_DIR / "test.csv"
 
 
 def load_split(data_dir=DATA_DIR):
-    """Load the versioned train/test CSVs and return X_train, X_test, y_train, y_test."""
+    """read data/train.csv + data/test.csv, return X_train, X_test, y_train, y_test"""
     data_dir = Path(data_dir)
     train = pd.read_csv(data_dir / "train.csv", low_memory=False)
     test = pd.read_csv(data_dir / "test.csv", low_memory=False)
@@ -40,9 +40,9 @@ def load_split(data_dir=DATA_DIR):
 
 
 def build_preprocessor(x):
-    """Impute + scale numeric columns, impute + one-hot categorical columns.
+    """numeric: fill median + scale, categorical: fill most common + one-hot.
 
-    Columns are discovered from the data, so the same code works for v1 and v2.
+    picks the columns from the data itself so v1 and v2 both work without changes
     """
     numeric = x.select_dtypes(include="number").columns.tolist()
     categorical = [c for c in x.columns if c not in numeric]
@@ -56,7 +56,7 @@ def build_preprocessor(x):
                 "onehot",
                 OneHotEncoder(
                     handle_unknown="infrequent_if_exist",
-                    max_categories=20,
+                    max_categories=20,  # team/affiliate have tons of values, cap it
                     sparse_output=False,
                 ),
             ),
@@ -68,7 +68,7 @@ def build_preprocessor(x):
 
 
 def regression_metrics(y_true, y_pred):
-    """Return a dict of standard regression metrics."""
+    """rmse, mae, median ae, r2"""
     return {
         "rmse": float(np.sqrt(mean_squared_error(y_true, y_pred))),
         "mae": float(mean_absolute_error(y_true, y_pred)),
@@ -79,7 +79,7 @@ def regression_metrics(y_true, y_pred):
 
 
 def save_json(obj, path):
-    """Write obj as pretty JSON, creating parent directories."""
+    """dump to json (makes the folder if needed)"""
     path = Path(path)
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(obj, indent=2), encoding="utf-8")

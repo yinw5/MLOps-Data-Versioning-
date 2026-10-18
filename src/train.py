@@ -1,9 +1,8 @@
-"""Train a baseline linear regression on the dataset version currently in data/.
+"""Baseline model (linear regression) for total_lift.
 
-This file never changes between v1 and v2 -- only the data checked out by the
-versioning tool changes.
+Don't edit this between v1 and v2 - just switch the data version with dvc/git lfs
+and rerun.
 
-Usage:
     python ../src/train.py --name v1
 """
 
@@ -16,7 +15,7 @@ from common import build_preprocessor, load_split, regression_metrics, save_json
 
 
 def main():
-    """Entry point."""
+    """main"""
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--name", required=True, help="label for the metrics file, e.g. v1")
     args = parser.parse_args()

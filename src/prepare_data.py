@@ -1,6 +1,5 @@
-"""Build dataset v1 (raw) or v2 (cleaned + new features) and write train/test CSVs.
+"""Makes dataset v1 (raw) or v2 (cleaned + extra features), split into train/test.
 
-Usage:
     python ../src/prepare_data.py --version v1 --raw ../data/raw/athletes.csv
     python ../src/prepare_data.py --version v2 --raw ../data/raw/athletes.csv
 """
@@ -23,14 +22,17 @@ HOWLONG_YEARS = {
 
 
 def add_total_lift(data):
-    """total_lift = deadlift + candj + snatch + backsq; drop rows where it is missing."""
+    """add total_lift (sum of the 4 lifts), rows missing any lift get dropped"""
     data = data.copy()
     data[TARGET] = data[LIFTS].sum(axis=1, min_count=len(LIFTS))
     return data.dropna(subset=[TARGET])
 
 
 def clean_v2(data):
-    """Cleaning code provided by the assignment (only fix: `v2[...]` -> `data[...]`)."""
+    """cleaning code from the assignment.
+
+    only change: v2['deadlift'] -> data['deadlift'] since v2 isn't defined
+    """
     # Remove not relevant columns
     data = data.dropna(subset=['region', 'age', 'weight', 'height', 'howlong', 'gender', 'eat',
                               'train', 'background', 'experience', 'schedule', 'howlong',
@@ -59,13 +61,13 @@ def clean_v2(data):
 
 
 def max_howlong_years(answer):
-    """Convert a multi-select 'howlong' answer to years (take the longest option chosen)."""
+    """howlong -> years. some people picked more than one answer, take the longest"""
     years = [HOWLONG_YEARS[a] for a in str(answer).split("|") if a in HOWLONG_YEARS]
     return max(years) if years else np.nan
 
 
 def add_features_v2(data):
-    """New engineered features for v2."""
+    """extra features for v2: bmi, years of crossfit, a few yes/no survey flags"""
     data = data.copy()
     data["bmi"] = 703 * data["weight"] / data["height"] ** 2
     data["howlong_years"] = data["howlong"].map(max_howlong_years)
@@ -85,7 +87,7 @@ def add_features_v2(data):
 
 
 def main():
-    """Entry point."""
+    """main"""
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--version", choices=["v1", "v2"], required=True)
     parser.add_argument("--raw", required=True, help="path to the raw athletes.csv")
@@ -96,12 +98,12 @@ def main():
     if args.version == "v2":
         data = add_features_v2(clean_v2(data))
     else:
-        # Direct identifiers are never model features; drop them so the versioned
-        # files (pushed to a public repo via Git LFS) carry no athlete names.
+        # not features anyway, and I don't want athlete names in a public repo
         data = data.drop(columns=["name", "athlete_id"])
     data = add_total_lift(data)
     print(f"{args.version} rows with total_lift: {len(data):,}  columns: {data.shape[1]}")
 
+    # same seed + ratio for v1 and v2
     train, test = train_test_split(data, test_size=TEST_SIZE, random_state=RANDOM_STATE)
     DATA_DIR.mkdir(exist_ok=True)
     train.to_csv(TRAIN_PATH, index=False)

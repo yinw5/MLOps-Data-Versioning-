@@ -1,6 +1,5 @@
-"""Exploratory data analysis of whatever dataset version is currently checked out in data/.
+"""EDA on whichever version is checked out in data/ right now.
 
-Usage:
     python ../src/eda.py --name v1
 """
 
@@ -18,7 +17,7 @@ from common import LIFTS, TARGET, TEST_PATH, TRAIN_PATH
 
 
 def main():
-    """Entry point."""
+    """main"""
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--name", required=True, help="label for the output folder, e.g. v1")
     args = parser.parse_args()
@@ -51,6 +50,7 @@ def main():
     axes[0].set_title(f"{args.name}: total_lift distribution")
     sns.boxplot(data=data[LIFTS], ax=axes[1])
     axes[1].set_title(f"{args.name}: individual lifts")
+    # log-ish scale or the v1 outliers squash everything
     axes[1].set_yscale("symlog")
     fig.tight_layout()
     fig.savefig(out / "target_and_lifts.png", dpi=120)

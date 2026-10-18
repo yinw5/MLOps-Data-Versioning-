@@ -129,13 +129,31 @@ All code has been run and every output is in `dvc/` and `gitlfs/`. What's left:
 6. Optional screenshots: `git log --oneline --decorate`, `git lfs ls-files`, `cat dvc/data.dvc`,
    the EDA plots in `dvc/reports/eda_v1/` and `eda_v2/`.
 
-### Tool comparison notes (from running both)
+### Tool comparison: DVC vs Git LFS (from running both on this project)
 
-| | DVC | Git LFS |
+| Criterion | DVC | Git LFS |
 |---|---|---|
-| Installation | pip/brew install, then `dvc init` + configure a remote (in a subfolder: `--subdir`; relative remote paths are resolved confusingly) | `brew install git-lfs` (~30 s) + one-time `git lfs install`; nothing else |
-| Versioning | `dvc add` → commit the `.dvc` pointer → `dvc push`; 3 steps, versions a whole folder, data never enters git | `git lfs track` once, then plain `git add`/`commit`; feels like normal git |
-| Switching versions | `git checkout <tag> -- data.dvc` + `dvc checkout` (2 commands) | `git checkout <tag> -- data` (1 command) |
-| Remote storage | any backend (local, S3, GDrive, …), configured separately | the git host (GitHub LFS, 1 GB free) |
-| ML extras | pipelines (`dvc.yaml`), metrics/experiment tracking | none |
-| Effect of DP | none, since DP is a training choice: same metrics with both tools | same |
+| **What it is** | Separate tool on top of git. Git stores a small `.dvc` pointer file (md5 hash + size); the data lives in a DVC cache/remote | Git extension. Git stores a pointer file (sha256 + size) in place of each tracked file; the content goes to an LFS store |
+| **Installation** | `pip install dvc` / `brew install dvc` (Python package, many dependencies; came with `uv sync`) | `brew install git-lfs` (single Go binary, ~30 s) |
+| **Project setup** | `dvc init` (here `dvc init --subdir`, since it lives in a subfolder of the repo) + `dvc remote add -d <name> <path>` | `git lfs install` (once per machine) + `git lfs track "gitlfs/data/*.csv"` (writes `.gitattributes`) |
+| **Setup gotchas hit** | 1) A root `.gitignore` rule `data/` stopped DVC from writing its own ignore file, so the first v1 commit failed. 2) `dvc remote modify ... url <relative path>` resolves relative paths in a confusing way: it was off by one folder until fixed | None. It worked first time |
+| **Versioning a dataset** | 3 steps: `dvc add data` → `git add data.dvc` + `git commit` + `git tag` → `dvc push` | 2 steps: `git add data` + `git commit` + `git tag`; LFS upload happens automatically on `git push` |
+| **Unit of versioning** | A whole directory as one object (`data/` → one `.dvc` file with `nfiles: 2`) | Individual files matching a pattern (`train.csv`, `test.csv` each get a pointer) |
+| **Inspecting versions** | `cat data.dvc`, `git diff dvc-v1 dvc-v2 -- data.dvc` (hash and size change: 30.0 MB → 12.1 MB) | `git lfs ls-files` (oid per file), `git show lfs-v1:gitlfs/data/train.csv` shows the pointer |
+| **Switching versions (same training code)** | 2 commands: `git checkout dvc-v1 -- data.dvc` then `dvc checkout`. Forgetting `dvc checkout` leaves the old data in place, a silent mismatch | 1 command: `git checkout lfs-v1 -- data`. Git's smudge filter swaps the real files in automatically |
+| **Proof code is unchanged** | `git status` after switching: only `data.dvc` / ignored data changed, `src/` untouched | `git status`: only `data/*.csv` changed, `src/` untouched |
+| **Where the data lives** | Anywhere you configure: local folder (used here), S3, GCS, Azure, Google Drive, SSH… Not tied to the git host | The git host's LFS server (GitHub here). Free tier is 1 GB storage + 1 GB/month bandwidth; this project uses ~40 MB |
+| **Storage used** | Local cache `.dvc/cache` + remote `dvc-storage/` (~40 MB for both versions) | `.git/lfs` (~40 MB for both versions) |
+| **Collaboration** | Others need `dvc pull` + access to the remote. Our local remote is not shareable, so a clone has pointers but no data | Clone/pull just works (LFS downloads automatically) for anyone with repo access |
+| **Large-data scaling** | Designed for GB–TB datasets; cloud remotes and deduplication by content hash | Fine for MBs–a few GB; costs and quotas grow with the host's LFS pricing |
+| **ML-specific features** | Pipelines (`dvc.yaml`, `dvc repro`), metrics/params tracking (`dvc metrics diff`), experiments (`dvc exp`) | None. It only stores big files |
+| **Learning curve** | Steeper: two systems (git + dvc) and their commands must stay in sync | Low: once tracked, it is plain git |
+| **Effect of DP on model metrics** | None from the tool. Identical numbers with both tools: R² 0.732 (non-DP) → ~0.70 (DP, ε 0.87–18.5) | Same |
+| **Best for** | ML projects with large/evolving data, cloud storage, reproducible pipelines | Small/medium binary/data files in a normal git workflow |
+
+**Takeaways for the slide**
+- **Ease of installation:** Git LFS wins (one small binary). DVC is a heavier Python install, but trivial if you already use pip/uv.
+- **Ease of data versioning:** Git LFS is simpler (plain git commands). DVC needs extra `dvc add`/`dvc push` steps and had two setup gotchas, but gives directory-level versions and storage flexibility.
+- **Ease of switching versions:** both kept the training code untouched. Git LFS takes one command; DVC takes two, and forgetting `dvc checkout` is an easy mistake.
+- **Effect of DP:** independent of the tool. DP cost about 0.03 R² (≈ +6 lb MAE) at every noise level tried; ε fell from 18.5 to 0.87 with almost no extra accuracy loss.
+- **Verdict:** Git LFS for quick, small projects; DVC for real ML work (large data, cloud remotes, pipelines and experiments).

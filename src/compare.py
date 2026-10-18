@@ -1,4 +1,4 @@
-"""Print comparison tables of v1 vs v2 and non-DP vs DP from the metrics/ folder."""
+"""Prints v1 vs v2 and non-DP vs DP tables from whatever is in metrics/."""
 
 import json
 from pathlib import Path
@@ -9,13 +9,13 @@ METRICS = Path("metrics")
 
 
 def load(name):
-    """Load a metrics JSON file if it exists."""
+    """load metrics/<name>.json, None if it's not there yet"""
     path = METRICS / f"{name}.json"
     return json.loads(path.read_text()) if path.exists() else None
 
 
 def main():
-    """Entry point."""
+    """main"""
     cols = ["rmse", "mae", "median_ae", "r2", "n_test"]
     rows = {name: load(name) for name in ["v1", "v2"]}
     table = pd.DataFrame({k: v for k, v in rows.items() if v}).T
