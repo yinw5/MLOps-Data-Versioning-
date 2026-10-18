@@ -1,0 +1,57 @@
+EDA for dataset v2
+rows: 30,029 (train 24,023 / test 6,006), columns: 25
+
+Missing values (% of rows):
+region                    0.0
+howlong                   0.0
+eat_paleo                 0.0
+eat_weigh_measure         0.0
+sched_multi_per_day       0.0
+exp_trains_others         0.0
+exp_level1_cert           0.0
+exp_started_with_coach    0.0
+bg_no_athletic            0.0
+bg_college_sports         0.0
+howlong_years             0.0
+bmi                       0.0
+schedule                  0.0
+gender                    0.0
+experience                0.0
+background                0.0
+eat                       0.0
+backsq                    0.0
+deadlift                  0.0
+snatch                    0.0
+candj                     0.0
+weight                    0.0
+height                    0.0
+age                       0.0
+total_lift                0.0
+
+Numeric summary:
+                          count     mean     std    min     25%      50%     75%      max
+age                     30029.0    32.12    7.44  18.00   27.00    31.00    37.0    56.00
+height                  30029.0    68.87    3.77  52.00   66.00    69.00    72.0    83.00
+weight                  30029.0   177.13   32.40   5.00  155.00   178.00   197.0   474.00
+candj                   30029.0   205.42   58.69   1.00  160.00   205.00   245.0   390.00
+snatch                  30029.0   156.17   48.83   1.00  120.00   155.00   190.0   386.00
+deadlift                30029.0   361.93   96.75   0.00  287.00   375.00   434.0  1000.00
+backsq                  30029.0   294.12   85.08   1.00  225.00   300.00   355.0   882.00
+bmi                     30029.0    26.11    3.49   0.98   24.02    25.82    27.8    62.88
+howlong_years           30029.0     2.26    1.35   0.25    1.50     1.50     3.0     5.00
+bg_college_sports       30029.0     0.28    0.45   0.00    0.00     0.00     1.0     1.00
+bg_no_athletic          30029.0     0.14    0.35   0.00    0.00     0.00     0.0     1.00
+exp_started_with_coach  30029.0     0.75    0.43   0.00    0.00     1.00     1.0     1.00
+exp_level1_cert         30029.0     0.31    0.46   0.00    0.00     0.00     1.0     1.00
+exp_trains_others       30029.0     0.27    0.44   0.00    0.00     0.00     1.0     1.00
+sched_multi_per_day     30029.0     0.43    0.50   0.00    0.00     0.00     1.0     1.00
+eat_weigh_measure       30029.0     0.09    0.29   0.00    0.00     0.00     0.0     1.00
+eat_paleo               30029.0     0.08    0.26   0.00    0.00     0.00     0.0     1.00
+total_lift              30029.0  1017.65  277.68   4.00  805.00  1040.00  1224.0  2135.00
+
+Gender counts:
+gender
+Male      21823
+Female     8206
+
+saved summary and plots to reports/eda_v2/

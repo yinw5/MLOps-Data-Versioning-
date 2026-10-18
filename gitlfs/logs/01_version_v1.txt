@@ -1,0 +1,5 @@
+raw rows: 423,006
+v1 rows with total_lift: 85,191  columns: 26
+wrote data/train.csv (68,152) and data/test.csv (17,039)
+992ab20b16 * gitlfs/data/test.csv
+5158299ce7 * gitlfs/data/train.csv
