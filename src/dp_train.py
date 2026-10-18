@@ -1,4 +1,4 @@
-"""Task 14-15: regular NN vs DP-SGD NN (tensorflow privacy) on v2.
+"""Regular NN vs DP-SGD NN (tensorflow privacy) on v2.
 
 Same network/optimizer/epochs for both, the DP one just adds clipping + noise.
 epsilon comes from compute_dp_sgd_privacy.

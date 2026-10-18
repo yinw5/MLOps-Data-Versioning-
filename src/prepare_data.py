@@ -29,10 +29,7 @@ def add_total_lift(data):
 
 
 def clean_v2(data):
-    """cleaning code from the assignment.
-
-    only change: v2['deadlift'] -> data['deadlift'] since v2 isn't defined
-    """
+    """cleaning code from the assignment"""
     # Remove not relevant columns
     data = data.dropna(subset=['region', 'age', 'weight', 'height', 'howlong', 'gender', 'eat',
                               'train', 'background', 'experience', 'schedule', 'howlong',
