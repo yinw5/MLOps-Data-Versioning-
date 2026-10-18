@@ -82,4 +82,4 @@ def save_json(obj, path):
     """Write obj as pretty JSON, creating parent directories."""
     path = Path(path)
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps(obj, indent=2))
+    path.write_text(json.dumps(obj, indent=2), encoding="utf-8")

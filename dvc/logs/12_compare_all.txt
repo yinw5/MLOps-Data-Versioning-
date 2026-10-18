@@ -1,0 +1,11 @@
+Baseline LinearRegression, v1 vs v2:
+              rmse           mae    median_ae          r2 n_test n_train n_features
+v1  2442999.349252  24362.550493  2982.470829 -360.327371  17039   68152         21
+v2      146.442205     111.95386    91.350681    0.720797   6006   24023         20 
+
+Neural net on v2, non-DP vs DP (delta=1e-05, epochs=15, batch=250, clip=1.0):
+                      rmse         mae  median_ae        r2  noise_multiplier    epsilon
+non-DP          143.398772  109.156605  88.030914  0.732281               NaN        NaN
+DP (noise=0.5)  151.629638  114.814400  90.911133  0.700666               0.5  18.477083
+DP (noise=1.1)  151.667204  114.864946  91.149719  0.700517               1.1   2.117029
+DP (noise=2.0)  151.827171  115.044073  91.756287  0.699885               2.0   0.868412

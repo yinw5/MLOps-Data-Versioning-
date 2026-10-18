@@ -1,0 +1,5 @@
+Baseline LinearRegression, v1 vs v2:
+              rmse           mae    median_ae          r2 n_test n_train n_features
+v1  2442999.349252  24362.550493  2982.470829 -360.327371  17039   68152         21
+v2      146.442205     111.95386    91.350681    0.720797   6006   24023         20 
+

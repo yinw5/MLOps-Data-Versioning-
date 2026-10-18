@@ -31,7 +31,8 @@ def main():
 
     lines = [
         f"EDA for dataset {args.name}",
-        f"rows: {len(data):,} (train {len(train):,} / test {len(test):,}), columns: {data.shape[1]}",
+        (f"rows: {len(data):,} (train {len(train):,} / test {len(test):,}), "
+         f"columns: {data.shape[1]}"),
         "",
         "Missing values (% of rows):",
         (data.isna().mean() * 100).round(1).sort_values(ascending=False).to_string(),

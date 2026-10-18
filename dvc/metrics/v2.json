@@ -1,0 +1,11 @@
+{
+  "rmse": 146.4422047634942,
+  "mae": 111.95385998685491,
+  "median_ae": 91.35068070053285,
+  "r2": 0.72079665673326,
+  "n_test": 6006,
+  "model": "LinearRegression",
+  "dataset": "v2",
+  "n_train": 24023,
+  "n_features": 20
+}
